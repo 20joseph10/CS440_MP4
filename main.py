@@ -2,8 +2,9 @@ import pygame
 from pygame.locals import *
 from pong import *
 import sys
-import signal
+
 import matplotlib.pyplot as plt
+import signal
 
 # http://trevorappleton.blogspot.com/2014/04/writing-pong-using-python-and-pygame.html
 
