@@ -6,6 +6,8 @@ import atexit
 import signal
 import matplotlib.pyplot as plt
 
+# http://trevorappleton.blogspot.com/2014/04/writing-pong-using-python-and-pygame.html
+
 game = Pong()
 train = True
 # train = False
@@ -16,8 +18,6 @@ def sigint_handler(signum, frame):
 
 
 signal.signal(signal.SIGINT, sigint_handler)
-# Source for drawing
-# http://trevorappleton.blogspot.com/2014/04/writing-pong-using-python-and-pygame.html
 
 # number of frames per second
 FPS = 200
