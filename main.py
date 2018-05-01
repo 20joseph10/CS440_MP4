@@ -2,9 +2,8 @@ import pygame
 from pygame.locals import *
 from pong import *
 import sys
-
-import matplotlib.pyplot as plt
 import signal
+import matplotlib.pyplot as plt
 
 # http://trevorappleton.blogspot.com/2014/04/writing-pong-using-python-and-pygame.html
 
@@ -32,10 +31,6 @@ PADDLESIZE = 100
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
-
-
-def drawArena():
-    DISPLAYSURF.fill(WHITE)
 
 
 def drawBall(ball, game):
@@ -69,7 +64,7 @@ def draw_plot():
     plt.show()
 
 if __name__ == '__main__':
-    if train == True:
+    if train:
         while True:
             game.update()
             if game.all_finished:
@@ -83,15 +78,15 @@ if __name__ == '__main__':
         # set up screen
         FPSCLOCK = pygame.time.Clock()
         DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
-        pygame.display.set_caption("CS440_MP4")
+        pygame.display.set_caption("CS440_MP4_hwu63")
 
         ball = pygame.Rect(game.state[0] * 600 - LINETHICKNESS / 2, game.state[1] * 600 - LINETHICKNESS / 2, LINETHICKNESS, LINETHICKNESS)
-        paddle = pygame.Rect(600 - LINETHICKNESS, game.state[4] * 600 - LINETHICKNESS, LINETHICKNESS,
-                             game.paddle.height * 600)
+        paddle = pygame.Rect(500 - LINETHICKNESS, game.state[4] * 500 - LINETHICKNESS, LINETHICKNESS,
+                             game.paddle.height * 500)
         wall = pygame.Rect(0, 0, LINETHICKNESS, WINDOWHEIGHT)
 
         # draw game
-        drawArena()
+        DISPLAYSURF.fill(WHITE)
         drawBall(ball, game)
         drawPaddle(paddle, game)
         drawWall(wall)
@@ -105,7 +100,7 @@ if __name__ == '__main__':
 
             # update game
             game.update()
-            drawArena()
+            DISPLAYSURF.fill(WHITE)
             drawBall(ball, game)
             drawWall(wall)
             drawPaddle(paddle, game)
