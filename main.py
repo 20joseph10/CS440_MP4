@@ -6,15 +6,14 @@ import atexit
 import signal
 import matplotlib.pyplot as plt
 
-MODE = 'train'
-# MODE = 'play'
-
-# initialize game
 game = Pong()
+train = True
+# train = False
 
 
 def sigint_handler(signum, frame):
     draw_plot()
+
 
 signal.signal(signal.SIGINT, sigint_handler)
 # Source for drawing
@@ -40,39 +39,20 @@ def drawArena():
 
 
 def drawBall(ball, game):
-    ball.x = scaleBall(game.ball.x)
-    ball.y = scaleBall(game.ball.y)
+    ball.x = game.ball.x * 500 - LINETHICKNESS / 2
+    ball.y = game.ball.y * 500 - LINETHICKNESS / 2
     pygame.draw.rect(DISPLAYSURF, RED, ball)
 
 
 def drawPaddle(paddle, game):
-    paddle.y = scaleBall(game.paddle.y)
+    paddle.y = game.paddle.y * 500 - LINETHICKNESS / 2
     pygame.draw.rect(DISPLAYSURF, BLACK, paddle)
 
 
 def drawWall(wall):
     pygame.draw.rect(DISPLAYSURF, BLACK, wall)
 
-
-def scaleBall(unit):
-    return 500 * unit - LINETHICKNESS / 2
-
-
-def scalePaddle(unit):
-    return 500 * unit - LINETHICKNESS
-
-
-def scaleWall(unit):
-    return 500 * unit
-
 def draw_plot():
-
-    with open('x.txt', 'w+') as xFile:
-        x = [str(i) for i in game.x]
-        xFile.write(' '.join(x))
-    with open('y.txt', 'w+') as yFile:
-        y = [str(i) for i in game.y]
-        yFile.write(' '.join(y))
 
     line_x = [0, ROUND]
     line_y = [9, 9]
@@ -89,13 +69,13 @@ def draw_plot():
     plt.show()
 
 if __name__ == '__main__':
-    if MODE == 'train':
+    if train == True:
         while True:
             game.update()
             if game.all_finished:
                 draw_plot()
 
-    elif MODE == 'play':
+    else:
         # initial pygame and surface
         pygame.init()
         global DISPLAYSURF
@@ -105,19 +85,10 @@ if __name__ == '__main__':
         DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
         pygame.display.set_caption("CS440_MP4")
 
-        # ball
-        ball_x = scaleBall(game.state[0])
-        ball_y = scaleBall(game.state[1])
-        ball = pygame.Rect(ball_x, ball_y, LINETHICKNESS, LINETHICKNESS)
-        # paddle
-        paddle_x = scalePaddle(1.0)
-        paddle_y = scalePaddle(game.state[4])
-        paddle_height = scaleWall(game.paddle.height)
-        paddle = pygame.Rect(paddle_x, paddle_y, LINETHICKNESS, paddle_height)
-        # wall
-        wall_x = scaleWall(0.0)
-        wall_y = scaleWall(0.0)
-        wall = pygame.Rect(wall_x, wall_y, LINETHICKNESS, WINDOWHEIGHT)
+        ball = pygame.Rect(game.state[0] * 600 - LINETHICKNESS / 2, game.state[1] * 600 - LINETHICKNESS / 2, LINETHICKNESS, LINETHICKNESS)
+        paddle = pygame.Rect(600 - LINETHICKNESS, game.state[4] * 600 - LINETHICKNESS, LINETHICKNESS,
+                             game.paddle.height * 600)
+        wall = pygame.Rect(0, 0, LINETHICKNESS, WINDOWHEIGHT)
 
         # draw game
         drawArena()
