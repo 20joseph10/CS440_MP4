@@ -10,7 +10,7 @@ class Paddle(object):
         self.actions = [0.0, -0.04, 0.04]
 
     def update(self, ball_y):
-        if self.agent == "QS":
+        if self.agent == "Q" or self.agent == "S":
             self.y += ball_y * 0.04
         elif self.agent == "R":
             self.y += random.choice(self.actions)
