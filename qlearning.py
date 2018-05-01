@@ -1,40 +1,51 @@
-import numpy as np
-import pandas as pd
+import random
+
+ALPHA = 50
+GAMMA = 0.7
+EPSILON = 0.05
 
 
 # https://github.com/MorvanZhou/Reinforcement-learning-with-tensorflow/blob/master/contents/3_Sarsa_maze/RL_brain.py
 class RL(object):
-    def __init__(self, action_space, learning_rate=0.01, reward_decay=0.9, e_greedy=0.9):
-        self.actions = action_space  # a list
-        self.lr = learning_rate
-        self.gamma = reward_decay
-        self.epsilon = e_greedy
+    def __init__(self, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON):
+        self.actions = [-1, 0, 1]  # a list
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
 
-        self.q_table = pd.DataFrame(columns=self.actions, dtype=np.float64)
+        self.q_table ={}
+        self.seen = {}
 
-    def check_state_exist(self, state):
-        if state not in self.q_table.index:
-            # append new state to q table
-            self.q_table = self.q_table.append(
-                pd.Series(
-                    [0]*len(self.actions),
-                    index=self.q_table.columns,
-                    name=state,
-                )
-            )
+    def get_q(self, state, action):
+        return self.q_table.get((state, action), 0.0)
 
-    def choose_action(self, observation):
-        self.check_state_exist(observation)
-        # action selection
-        if np.random.rand() < self.epsilon:
-            # choose best action
-            state_action = self.q_table.loc[observation, :]
-            state_action = state_action.reindex(np.random.permutation(state_action.index))     # some actions have same value
-            action = state_action.idxmax()
+    def learn_q(self, state, action, reward, value):
+        if (state, action) not in self.seen:
+            self.seen[(state, action)] = 0
+        self.seen[(state, action)] += 1
+        old_value = self.q_table.get((state, action), None)
+        if old_value is None:
+            self.q_table[(state, action)] = reward
         else:
-            # choose random action
-            action = np.random.choice(self.actions)
-        return action
+            # C / (C + N(s, a))
+            self.q_table[(state, action)] = old_value + float(self.alpha) / float(
+                self.alpha + self.seen[(state, action)]) * (value - old_value)
+
+    def choose_action(self, state):
+        if random.random() < self.epsilon:
+            return random.choice(self.actions)
+        else:
+            q = [self.get_q(state, a) for a in self.actions]
+            maxQ = max(q)
+            if q.count(maxQ) > 1:
+                best = [i for i in range(3) if q[i] == maxQ]
+                action = self.actions[random.choice(best)]
+                return action
+            else:
+                return self.actions[q.index(maxQ)]
+
+    def choose_action_random(self):
+            return random.choice([-1.0, 0.0, 1.0])
 
     def learn(self, *args):
         pass
@@ -42,30 +53,21 @@ class RL(object):
 
 # off-policy
 class QLearningTable(RL):
-    def __init__(self, actions, learning_rate=0.01, reward_decay=0.9, e_greedy=0.9):
-        super(QLearningTable, self).__init__(actions, learning_rate, reward_decay, e_greedy)
+    def __init__(self, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON):
+        super(QLearningTable, self).__init__(alpha, gamma, epsilon)
 
-    def learn(self, s, a, r, s_):
-        self.check_state_exist(s_)
-        q_predict = self.q_table.loc[s, a]
-        if s_ != 'terminal':
-            q_target = r + self.gamma * self.q_table.loc[s_, :].max()  # next state is not terminal
-        else:
-            q_target = r  # next state is terminal
-        self.q_table.loc[s, a] += self.lr * (q_target - q_predict)  # update
+    def learn(self, state1, action1, reward, state2):
+        max_q_new = max([self.get_q(state2, a) for a in self.actions])
+        self.learn_q(state1, action1, reward, reward + self.gamma * max_q_new)
 
 
 # on-policy
 class SarsaTable(RL):
 
-    def __init__(self, actions, learning_rate=0.01, reward_decay=0.9, e_greedy=0.9):
-        super(SarsaTable, self).__init__(actions, learning_rate, reward_decay, e_greedy)
+    def __init__(self, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON):
+        super(SarsaTable, self).__init__(alpha, gamma, epsilon)
 
-    def learn(self, s, a, r, s_, a_):
-        self.check_state_exist(s_)
-        q_predict = self.q_table.loc[s, a]
-        if s_ != 'terminal':
-            q_target = r + self.gamma * self.q_table.loc[s_, a_]  # next state is not terminal
-        else:
-            q_target = r  # next state is terminal
-        self.q_table.loc[s, a] += self.lr * (q_target - q_predict)  # update
+    def learn(self, state1, action1, reward, state2, action2):
+        q_next = self.get_q(state2, action2)
+        self.learn_q(state1, action1, reward, reward + self.gamma * q_next)
+
