@@ -35,7 +35,7 @@ class Ball(object):
                 self.velocity_y = max(-1.0, self.velocity_y)
 
     def update(self):
-            self.x += self.v_x
-            self.y += self.v_y
+            self.x += self.velocity_x
+            self.y += self.velocity_y
             self.bounce()
 
