@@ -1,17 +1,17 @@
 import math
 from ball import *
 from paddle import *
-from rl import *
+from qlearning_sarsa import *
 
-ROUND = 200
+ROUND = 20000
 LIMIT = True
-OPTIMAL = False
+LARGER_THAN_NINE = False
 
 
 class Pong(object):
     def __init__(self):
         self.ball = Ball()
-        self.paddle = Paddle()
+        self.paddle = Paddle("Q")
         self.round_finished = False
         self.all_finished = False
         self.lose_times = 0
@@ -19,8 +19,7 @@ class Pong(object):
         self.state = (self.ball.x, self.ball.y, self.ball.velocity_x, self.ball.velocity_y, self.paddle.y)
         self.x = [0.0]
         self.y = [0.0]
-        self.qlearning = QLearningTable(alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON)
-        self.sarsa = SarsaTable(alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON)
+        self.rl = RL()
         self.success = 0
         self.score = 0
         self.bounce_off_paddle = False
@@ -30,7 +29,7 @@ class Pong(object):
         self.lastState = None
         self.lastAction = None
 
-    def terminate(self):
+    def finish(self):
         if len(self.scores) == 1000:
             self.scores = self.scores[1:]
         self.scores.append(self.score)
@@ -42,27 +41,25 @@ class Pong(object):
 
         if self.round % 1000 == 0:
             total = float(sum(self.scores)) / 1000.0
-            self.y.append(total)
-            self.x.append(self.round)
             print(self.round, total)
 
         if LIMIT:
             if self.round == ROUND:
                 self.all_finished = True
 
-        if OPTIMAL:
+        if LARGER_THAN_NINE:
             if total > 9.0:
                 self.all_finished = True
 
     def check(self):
         if self.ball.x > self.paddle.x:
-            if self.paddle.y < self.ball.y < self.paddle.y + self.paddle.height:
+            if self.ball.y > self.paddle.y and self.ball.y < self.paddle.y + self.paddle.height:
                 self.ball.bounce_off_paddle()
                 self.success += 1
                 self.score += 1
                 self.bounce_off_paddle = True
             else:
-                self.terminate()
+                self.finish()
 
     def update_state(self):
         if self.round_finished:
@@ -92,14 +89,14 @@ class Pong(object):
         if self.round_finished:
             reward = -1000.0
             if self.lastState is not None:
-                self.qlearning.learn(self.lastState, self.lastAction, reward, state)
-                # self.sarsa.learn(self.lastState, self.lastAction, reward, state)
+                self.rl.learn_qlearning(self.lastState, self.lastAction, reward, state)
+                # self.rl.learn_sarsa(self.lastState, self.lastAction, reward, state)
             self.lastState = None
 
             # restart game
             self.ball = Ball()
             self.paddle = Paddle('Q')
-#             self.paddle = Paddle('S')
+            # self.paddle = Paddle('S')
             self.round_finished = False
             return
 
@@ -108,10 +105,12 @@ class Pong(object):
             reward = 1000.0
 
         if self.lastState is not None:
-            self.qlearning.learn(self.lastState, self.lastAction, reward, state)
+            self.rl.learn_qlearning(self.lastState, self.lastAction, reward, state)
+            # self.rl.learn_sarsa(self.lastState, self.lastAction, reward, state)
 
         state = self.update_state()
-        action = self.qlearning.choose_action(state)
+        action = self.rl.choose_action(state)
+
         self.lastState = state
         self.lastAction = action
         self.paddle.update(action)
