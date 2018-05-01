@@ -38,7 +38,7 @@ class NN(object):
             self.weights[i] *= init_weight
         self.mini_batch_GD(epoch)
 
-    def test(self, X, y):
+    def test(self, X, y=None):
         return self.layer_network(X, y, test=True)
 
     def mini_batch_GD(self, epoch, batch_size=100):
@@ -114,6 +114,8 @@ class NN(object):
 
 nn = NN(n_layer=3)
 nn.train(200, 0.1)
+prediction = nn.test(nn.train_data[:, :-1])
+print(confusion_matrix(nn.train_data[:, -1], prediction))
 # a = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15]])
 # print(np.argmax(a, axis=1))
 # b = np.array([1.0,2.0,3.0])
