@@ -99,7 +99,7 @@ class Pong(object):
             # restart game
             self.ball = Ball()
             self.paddle = Paddle('Q')
-            self.paddle = Paddle('S')
+#             self.paddle = Paddle('S')
             self.round_finished = False
             return
 
