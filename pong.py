@@ -1,117 +1,60 @@
-import math
-from ball import *
-from paddle import *
-from qlearning_sarsa import *
+import random
 
-ROUND = 20000
-LIMIT = True
-LARGER_THAN_NINE = False
+C = 50
+GAMMA = 0.7
+EPSILON = 0.01
 
 
-class Pong(object):
+# https://github.com/MorvanZhou/Reinforcement-learning-with-tensorflow/blob/master/contents/3_Sarsa_maze/RL_brain.py
+# https://github.com/studywolf/blog/blob/master/RL/Cat%20vs%20Mouse%20exploration/qlearn.py
+class RL(object):
     def __init__(self):
-        self.ball = Ball()
-        self.paddle = Paddle("Q")
-        self.round_finished = False
-        self.all_finished = False
-        self.lose_times = 0
+        self.actions = [-1, 0, 1]  # a list
+        self.c = C
+        self.gamma = GAMMA
+        self.epsilon = EPSILON
 
-        self.state = (self.ball.x, self.ball.y, self.ball.velocity_x, self.ball.velocity_y, self.paddle.y)
-        self.x = [0.0]
-        self.y = [0.0]
-        self.rl = RL()
-        self.success = 0
-        self.score = 0
-        self.bounce_off_paddle = False
-        self.scores = []
-        self.round = 0
+        self.q_table = {}
+        self.N = {}
 
-        self.lastState = None
-        self.lastAction = None
+    def get_q(self, state, action):
+        return self.q_table.get((state, action), 0.0)
 
-    def finish(self):
-        if len(self.scores) == 1000:
-            self.scores = self.scores[1:]
-        self.scores.append(self.score)
-        self.score = 0
-        self.lose_times += 1
-        self.round_finished = True
-        self.round += 1
-        total = 0
-
-        if self.round % 1000 == 0:
-            total = float(sum(self.scores)) / 1000.0
-            print(self.round, total)
-
-        if LIMIT:
-            if self.round == ROUND:
-                self.all_finished = True
-
-        if LARGER_THAN_NINE:
-            if total > 9.0:
-                self.all_finished = True
-
-    def check(self):
-        if self.ball.x > self.paddle.x:
-            if self.ball.y > self.paddle.y and self.ball.y < self.paddle.y + self.paddle.height:
-                self.ball.bounce_off_paddle()
-                self.success += 1
-                self.score += 1
-                self.bounce_off_paddle = True
-            else:
-                self.finish()
-
-    def update_state(self):
-        if self.round_finished:
-            return 12, 12, 12, 12, 12
+    def learn_q(self, state, action, reward, value):
+        if (state, action) not in self.N:
+            self.N[(state, action)] = 0
+        self.N[(state, action)] += 1
+        old_value = self.q_table.get((state, action), None)
+        if old_value is None:
+            self.q_table[(state, action)] = reward
         else:
-            if self.ball.velocity_x > 0:
-                x_velocity = 1
+            # C / (C + N(s, a))
+            self.q_table[(state, action)] = old_value + float(self.c) / float(
+                self.c + self.N[(state, action)]) * (value - old_value)
+
+    def choose_action(self, state):
+        if random.random() < self.epsilon:
+            return random.choice(self.actions)
+        else:
+            q = [self.get_q(state, a) for a in self.actions]
+            maxQ = max(q)
+            if q.count(maxQ) > 1:
+                best = [i for i in range(3) if q[i] == maxQ]
+                action = self.actions[random.choice(best)]
+                return action
             else:
-                x_velocity = -1
+                return self.actions[q.index(maxQ)]
 
-            if self.ball.velocity_y >= 0.02:
-                y_velocity = 1
-            elif self.ball.velocity_y <= 0.02:
-                y_velocity = -1
-            else:
-                y_velocity = 0
-            discrete_ball_x = min(11, int(math.floor(12 * self.ball.x)))
-            discrete_ball_y = min(11, int(math.floor(12 * self.ball.y)))
-            discrete_paddle = min(11, int(math.floor(12 * self.paddle.y / (1 - self.paddle.height))))
-            return discrete_ball_x, discrete_ball_y, x_velocity, y_velocity, discrete_paddle
+    def choose_action_random(self):
+            return random.choice([-1.0, 0.0, 1.0])
 
-    def update(self):
-        self.check()
-        state = self.update_state()
-        reward = 0.0
+    def learn_qlearning(self, state1, action1, reward, state2):
+        max_q_new = max([self.get_q(state2, a) for a in self.actions])
+        self.learn_q(state1, action1, reward, reward + self.gamma * max_q_new)
 
-        if self.round_finished:
-            reward = -1000.0
-            if self.lastState is not None:
-                self.rl.learn_qlearning(self.lastState, self.lastAction, reward, state)
-                # self.rl.learn_sarsa(self.lastState, self.lastAction, reward, state)
-            self.lastState = None
+    def learn_sarsa(self, state1, action1, reward, state2, action2):
+        q_next = self.get_q(state2, action2)
+        self.learn_q(state1, action1, reward, reward + self.gamma * q_next)
 
-            # restart game
-            self.ball = Ball()
-            self.paddle = Paddle('Q')
-            # self.paddle = Paddle('S')
-            self.round_finished = False
-            return
 
-        if self.bounce_off_paddle:
-            self.bounce_off_paddle = False
-            reward = 1000.0
 
-        if self.lastState is not None:
-            self.rl.learn_qlearning(self.lastState, self.lastAction, reward, state)
-            # self.rl.learn_sarsa(self.lastState, self.lastAction, reward, state)
-
-        state = self.update_state()
-        action = self.rl.choose_action(state)
-
-        self.lastState = state
-        self.lastAction = action
-        self.paddle.update(action)
-        self.ball.update()
