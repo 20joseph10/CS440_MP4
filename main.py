@@ -2,7 +2,6 @@ import pygame
 from pygame.locals import *
 from pong import *
 import sys
-import atexit
 import signal
 import matplotlib.pyplot as plt
 
