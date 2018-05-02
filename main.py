@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 # http://trevorappleton.blogspot.com/2014/04/writing-pong-using-python-and-pygame.html
 
 game = Pong('S')
-# game = Pong('NN')
-# train = True
-train = False
+game = Pong('NN')
+train = True
+# train = False
 
 
 def sigint_handler(signum, frame):
@@ -32,6 +32,9 @@ PADDLESIZE = 100
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+#font
+pygame.font.init()
+FONT = pygame.font.SysFont("monospace", 16)
 
 
 def drawBall(ball, game):
@@ -65,11 +68,12 @@ def draw_plot():
     plt.show()
 
 if __name__ == '__main__':
-
+        # train
         while not game.all_finished:
             game.update()
         draw_plot()
 
+        #
         # initial pygame and surface
         pygame.init()
         global DISPLAYSURF
@@ -91,7 +95,11 @@ if __name__ == '__main__':
         drawWall(wall)
 
         game.ROUND = 200
+        game.round = 0
         game.all_finished = False
+        game.x = []
+        game.y = []
+
         while not game.all_finished:  # main game loop
             for event in pygame.event.get():
                 # exit game
@@ -107,5 +115,11 @@ if __name__ == '__main__':
             drawPaddle(paddle, game)
 
             # update the screen
+            roundtext = FONT.render("Round {0}".format(game.round), 1, (0, 0, 0))
+            DISPLAYSURF.blit(roundtext, (10, 10))
+            scoretext = FONT.render("Score {0}".format(game.score), 1, (0, 0, 0))
+            DISPLAYSURF.blit(scoretext, (10, 20))
             pygame.display.update()
             FPSCLOCK.tick(FPS)
+
+        draw_plot()
