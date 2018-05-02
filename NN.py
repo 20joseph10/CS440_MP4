@@ -1,6 +1,10 @@
 import numpy as np
 from scipy.special import logsumexp
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+import seaborn as sn
+import pandas as pd
+import matplotlib.pyplot as plt
 
 
 class NN(object):
@@ -14,7 +18,7 @@ class NN(object):
         self.train_data = np.array(train_set).astype('float')
         feature_dim = self.train_data[:, :-1].shape[1]
         self.n_samples = self.train_data.shape[0]
-        self.train_data[:, :-1] = (self.train_data[:, :-1] - np.mean(self.train_data[:, :-1], axis=0)[None, :])\
+        self.train_data[:, :-1] = (self.train_data[:, :-1] - np.mean(self.train_data[:, :-1], axis=0)[None, :]) \
                                   / np.std(self.train_data[:, :-1], axis=0)[None, :]
         self.layer = n_layer
         self.units = n_units
@@ -24,7 +28,7 @@ class NN(object):
         bs = []
         ws.append(np.random.rand(feature_dim, n_units))
         bs.append(np.zeros(n_units))
-        for i in range(1, n_layer-1):
+        for i in range(1, n_layer - 1):
             ws.append(np.random.rand(n_units, n_units))
             bs.append(np.zeros(n_units))
         ws.append(np.random.rand(n_units, 3))
@@ -36,41 +40,64 @@ class NN(object):
     def train(self, epoch, init_weight):
         for i in range(len(self.weights)):
             self.weights[i] *= init_weight
-        self.mini_batch_GD(epoch)
+        loss_curve, acc_curve = self.mini_batch_GD(epoch)
 
-    def test(self, X, y=None):
-        return self.layer_network(X, y, test=True)
+        fig = plt.figure(figsize=(15, 15))
+        ax1 = fig.add_subplot(211)
+        ax1.plot(loss_curve)
+        ax1.set_xlabel('Epoch')
+        ax1.set_ylabel('Loss')
+        ax2 = fig.add_subplot(212)
+        ax2.plot(acc_curve)
+        ax2.set_xlabel('Epoch')
+        ax2.set_ylabel('Accuracy')
+        fig.suptitle('Loss & Accuracy vs. Epochs in NN with ' +
+                     str(self.layer) + ' layers, ' + str(self.units) + ' neurons\n' +
+                     'learning rate=' + str(self.learn_rate) +
+                     ', initial weight scale=' + str(init_weight),
+                     fontsize=20)
+        plt.subplots_adjust(top=15)
+        fig.show()
+
+    def test(self, X):
+        return self.layer_network(X)
 
     def mini_batch_GD(self, epoch, batch_size=100):
-        for e in range(1, epoch+1):
+        loss_epoch = np.zeros(epoch)
+        acc_epoch = np.zeros(epoch)
+        for e in range(1, epoch + 1):
             np.random.shuffle(self.train_data)
             for i in range(0, self.n_samples, batch_size):
-                actual_batch = min(batch_size, self.n_samples-i)
-                Xy = self.train_data[i:i+actual_batch]
+                actual_batch = min(batch_size, self.n_samples - i)
+                Xy = self.train_data[i:i + actual_batch]
                 X = Xy[:, :-1]
                 y = Xy[:, -1]
                 loss = self.layer_network(X, y, test=False)
+            loss_epoch[e-1] = loss
+            pred = self.test(self.train_data[:, :-1])
+            acc_epoch[e-1] = accuracy_score(self.train_data[:, -1], pred)
             print('Loss in epoch {}: {}'.format(e, loss))
+        return loss_epoch, acc_epoch
 
-    def layer_network(self, X, y, test):
+    def layer_network(self, X, y=None, test=True):
         acache = []
         rcache = []
         A = X
-        for i in range(self.layer-1):
+        for i in range(self.layer - 1):
             Z = self.affine_forward(A, i)
             acache.append(A)
             A = self.relu_forward(Z)
             rcache.append(Z)
-        F = self.affine_forward(A, self.layer-1)
+        F = self.affine_forward(A, self.layer - 1)
         acache.append(A)
         if test:
             return np.argmax(F, axis=1)
         loss, dF = self.cross_entropy(F, y)
         dZ = dF
-        for i in range(self.layer-1, 0, -1):
+        for i in range(self.layer - 1, 0, -1):
             dA, dW, db = self.affine_backward(dZ, acache, i)
             self.update_param(dW, db, i)
-            dZ = self.relu_backward(dA, rcache, i-1)
+            dZ = self.relu_backward(dA, rcache, i - 1)
         dX, dW, db = self.affine_backward(dZ, acache, 0)
         self.update_param(dW, db, 0)
 
@@ -103,7 +130,7 @@ class NN(object):
         label_flag = np.zeros(np.shape(F))
         for i in range(len(F)):
             label_flag[i, int(y[i])] = 1
-        dF = -(label_flag - np.exp(F) / (np.sum(np.exp(F), axis=1)[:, None])) / len(F)
+        dF = -(label_flag - np.exp(F - L2[:, None])) / len(F)
 
         return L, dF
 
@@ -112,20 +139,14 @@ class NN(object):
         self.biases[layer_index] -= self.learn_rate * db
 
 
-nn = NN(n_layer=3)
-nn.train(200, 0.1)
+nn = NN(n_layer=3, n_units=256, learn_rate=0.1)
+nn.train(epoch=200, init_weight=0.1)
+Y = nn.train_data[:, -1]
 prediction = nn.test(nn.train_data[:, :-1])
-print(confusion_matrix(nn.train_data[:, -1], prediction))
-# a = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15]])
-# print(np.argmax(a, axis=1))
-# b = np.array([1.0,2.0,3.0])
-# print(np.diag(np.array([a[:, int(i)] for i in b])))
-# print(logsumexp(a, axis=1))
-# print(a[:,:-1].shape)
-# print(np.mean(nn.train_data, axis=0))
-# print(np.std(nn.train_data, axis=0))
-# print(a-np.std(nn.train_data[:,:-1], axis=0)[None,:])
-# for i in range(len(nn.biases)):
-#     print(nn.biases[i]+1)
-# print(nn.train_data.shape)
-# a = np.arange(10)
+print('\nClassification Error: {}'.format(accuracy_score(Y, prediction)))
+df_cm = pd.DataFrame(confusion_matrix(Y, prediction), index=[i for i in ['UP', 'NONE', 'DOWN']],
+                     columns=[i for i in ['UP', 'NONE', 'DOWN']])
+plt.figure(figsize=(10, 8))
+sn.heatmap(df_cm, annot=True, fmt='d')
+plt.title('Confusion Matrix')
+plt.show()
