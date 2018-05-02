@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # http://trevorappleton.blogspot.com/2014/04/writing-pong-using-python-and-pygame.html
 
 game = Pong('S')
-game = Pong('NN')
+# game = Pong('NN')
 train = True
 # train = False
 
