@@ -114,6 +114,8 @@ if __name__ == '__main__':
         drawBall(ball, game)
         drawWall(wall)
         drawPaddle(paddle, game)
+        
+        game.test_round = game.round
 
         # update the screen
         roundtext = FONT.render("Round {0}".format(game.round), 1, (0, 0, 0))
