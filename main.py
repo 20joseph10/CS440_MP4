@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 # http://trevorappleton.blogspot.com/2014/04/writing-pong-using-python-and-pygame.html
 
 game = Pong()
-train = True
-# train = False
+# train = True
+train = False
 
 
 def sigint_handler(signum, frame):
