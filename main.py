@@ -49,7 +49,7 @@ def drawWall(wall):
 
 def draw_plot():
 
-    line_x = [0, ROUND]
+    line_x = [0, game.ROUND]
     line_y = [9, 9]
     f, ax = plt.subplots()
     ax.plot(game.x, game.y, 'b', label='Average Bounce')
@@ -64,13 +64,11 @@ def draw_plot():
     plt.show()
 
 if __name__ == '__main__':
-    if train:
-        while True:
-            game.update()
-            if game.all_finished:
-                draw_plot()
 
-    else:
+        while not game.all_finished:
+            game.update()
+        draw_plot()
+
         # initial pygame and surface
         pygame.init()
         global DISPLAYSURF
@@ -91,7 +89,9 @@ if __name__ == '__main__':
         drawPaddle(paddle, game)
         drawWall(wall)
 
-        while True:  # main game loop
+        game.ROUND = 200
+        game.all_finished = False
+        while not game.all_finished:  # main game loop
             for event in pygame.event.get():
                 # exit game
                 if event.type == QUIT:
