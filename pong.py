@@ -2,6 +2,7 @@ import math
 from ball import *
 from paddle import *
 from qlearning_sarsa import *
+from NN import *
 
 ROUND = 50000
 LIMIT = True
@@ -9,9 +10,10 @@ LARGER_THAN_NINE = False
 
 
 class Pong(object):
-    def __init__(self):
+    def __init__(self, agent):
         self.ball = Ball()
-        self.paddle = Paddle("S")
+        self.paddle = Paddle(agent)
+        self.agent = agent
         self.round_finished = False
         self.all_finished = False
         self.lose_times = 0
@@ -19,7 +21,11 @@ class Pong(object):
         self.state = (self.ball.x, self.ball.y, self.ball.velocity_x, self.ball.velocity_y, self.paddle.y)
         self.x = [0.0]
         self.y = [0.0]
-        self.rl = RL()
+        if agent == 'S':
+            self.rl = RL()
+        elif agent == 'NN':
+            self.nn = NN(model_dir='.')
+            self.all_finished = True
         self.success = 0
         self.score = 0
         self.bounce_off_paddle = False
@@ -39,8 +45,9 @@ class Pong(object):
         self.round += 1
         total = 0
 
+
         if self.round % 1000 == 0:
-            total = float(sum(self.scores)) / 1000.0
+            total = float(sum(self.scores)) / 1000
             print(self.round, total)
             self.x.append(self.round)
             self.y.append(total)
@@ -85,6 +92,25 @@ class Pong(object):
 
     def update(self):
         self.check()
+        if self.agent == 'NN':
+            action = self.nn.test(np.array([self.ball.x,
+                                            self.ball.y,
+                                            self.ball.velocity_x,
+                                            self.ball.velocity_y,
+                                            self.paddle.y]))
+            self.paddle.update(action)
+            self.ball.update()
+
+            if self.round_finished:
+                self.ball = Ball()
+                self.paddle = Paddle('NN')
+                self.round_finished = False
+
+            if self.bounce_off_paddle:
+                self.bounce_off_paddle = False
+
+            return
+
         state = self.update_state()
         action = self.rl.choose_action(state)
         reward = 0.0

@@ -7,13 +7,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import glob
 
+
 class NN(object):
-    def __init__(self, n_layer=4, n_units=256, learn_rate=0.1, model_dir = None):
+    def __init__(self, n_layer=4, n_units=256, learn_rate=0.1, model_dir=None):
         train_set = []
         ws = []
         bs = []
 
-        if model_dir == None:
+        if model_dir is None:
             with open('expert_policy.txt') as f:
                 content = f.readlines()
             for i in content:
@@ -24,7 +25,6 @@ class NN(object):
             self.n_samples = self.train_data.shape[0]
             self.train_data[:, :-1] = (self.train_data[:, :-1] - np.mean(self.train_data[:, :-1], axis=0)[None, :]) \
                                       / np.std(self.train_data[:, :-1], axis=0)[None, :]
-            self.layer = n_layer
             self.units = n_units
             self.learn_rate = learn_rate
 
@@ -41,16 +41,18 @@ class NN(object):
             for file in glob.glob("*.npy"):
                 load_data[:] = file.strip().split(sep='.')[0].split(sep='_')
                 if load_data[0] == 'W':
-                    ws.append(np.load( model_dir + '/W_' + load_data[1] + '.npy'))
-                if load_data[1] == 'B':
-                    bs.append(np.load( model_dir + '/W_' + load_data[1] + '.npy'))
+                    ws.append(np.load(model_dir + '/W_' + load_data[1] + '.npy'))
+                if load_data[0] == 'B':
+                    bs.append(np.load(model_dir + '/B_' + load_data[1] + '.npy'))
 
         self.weights = ws
         self.biases = bs
+        self.layer = len(self.weights)
 
     def train(self, epoch, init_weight):
         for i in range(len(self.weights)):
             self.weights[i] *= init_weight
+        loss_curve, acc_curve = self.mini_batch_GD(epoch)
 
         file_prefix = ['W_', 'B_']
         for i in range(len(self.weights)):
@@ -61,7 +63,6 @@ class NN(object):
         print('train finished, model file written')
 
         # figure
-        loss_curve, acc_curve = self.mini_batch_GD(epoch)
         fig = plt.figure(figsize=(15, 15))
         ax1 = fig.add_subplot(211)
         ax1.plot(loss_curve)
@@ -93,9 +94,9 @@ class NN(object):
                 X = Xy[:, :-1]
                 y = Xy[:, -1]
                 loss = self.layer_network(X, y, test=False)
-            loss_epoch[e-1] = loss
+            loss_epoch[e - 1] = loss
             pred = self.test(self.train_data[:, :-1])
-            acc_epoch[e-1] = accuracy_score(self.train_data[:, -1], pred)
+            acc_epoch[e - 1] = accuracy_score(self.train_data[:, -1], pred)
             print('Loss in epoch {}: {}'.format(e, loss))
         return loss_epoch, acc_epoch
 
@@ -159,16 +160,20 @@ class NN(object):
         self.biases[layer_index] -= self.learn_rate * db
 
 
-nn = NN(n_layer=3, n_units=256, learn_rate=0.1)
-# if read model
-# nn = NN(n_layer=3, n_units=256, learn_rate=0.1, model_dir='.')
-nn.train(epoch=200, init_weight=0.1)
-Y = nn.train_data[:, -1]
-prediction = nn.test(nn.train_data[:, :-1])
-print('\nClassification Error: {}'.format(accuracy_score(Y, prediction)))
-df_cm = pd.DataFrame(confusion_matrix(Y, prediction), index=[i for i in ['UP', 'NONE', 'DOWN']],
-                     columns=[i for i in ['UP', 'NONE', 'DOWN']])
-plt.figure(figsize=(10, 8))
-sn.heatmap(df_cm, annot=True, fmt='d')
-plt.title('Confusion Matrix')
-plt.show()
+if __name__ == '__main__':
+
+    # if we want to read model, uncomment next line, comment all following lines
+    # nn = NN(model_dir='.')
+
+    nn = NN(n_layer=4, n_units=256, learn_rate=0.1)
+    nn.train(epoch=500, init_weight=0.025)
+
+    Y = nn.train_data[:, -1]
+    prediction = nn.test(nn.train_data[:, :-1])
+    print('\nClassification Error: {}'.format(1-accuracy_score(Y, prediction)))
+    df_cm = pd.DataFrame(confusion_matrix(Y, prediction), index=[i for i in ['UP', 'NONE', 'DOWN']],
+                         columns=[i for i in ['UP', 'NONE', 'DOWN']])
+    plt.figure(figsize=(10, 8))
+    sn.heatmap(df_cm, annot=True, fmt='d')
+    plt.title('Confusion Matrix')
+    plt.show()

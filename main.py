@@ -7,10 +7,8 @@ import matplotlib.pyplot as plt
 
 # http://trevorappleton.blogspot.com/2014/04/writing-pong-using-python-and-pygame.html
 
-game = Pong('S')
-# game = Pong('NN')
-train = True
-# train = False
+# game = Pong('S')
+game = Pong('NN')
 
 
 def sigint_handler(signum, frame):
@@ -20,7 +18,7 @@ def sigint_handler(signum, frame):
 signal.signal(signal.SIGINT, sigint_handler)
 
 # number of frames per second
-FPS = 200
+FPS = 20
 
 # window size
 WINDOWWIDTH = 500
@@ -32,7 +30,7 @@ PADDLESIZE = 100
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
-#font
+# font
 pygame.font.init()
 FONT = pygame.font.SysFont("monospace", 16)
 
@@ -51,8 +49,8 @@ def drawPaddle(paddle, game):
 def drawWall(wall):
     pygame.draw.rect(DISPLAYSURF, BLACK, wall)
 
-def draw_plot():
 
+def draw_plot():
     line_x = [0, game.ROUND]
     line_y = [9, 9]
     f, ax = plt.subplots()
@@ -67,59 +65,62 @@ def draw_plot():
     plt.grid(True)
     plt.show()
 
+
 if __name__ == '__main__':
-        # train
+    # train
+    if not game.all_finished:
         while not game.all_finished:
             game.update()
         draw_plot()
 
-        #
-        # initial pygame and surface
-        pygame.init()
-        global DISPLAYSURF
+    #
+    # initial pygame and surface
+    pygame.init()
+    global DISPLAYSURF
 
-        # set up screen
-        FPSCLOCK = pygame.time.Clock()
-        DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
-        pygame.display.set_caption("CS440_MP4_hwu63")
+    # set up screen
+    FPSCLOCK = pygame.time.Clock()
+    DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
+    pygame.display.set_caption("CS440_MP4_hwu63")
 
-        ball = pygame.Rect(game.state[0] * 600 - LINETHICKNESS / 2, game.state[1] * 600 - LINETHICKNESS / 2, LINETHICKNESS, LINETHICKNESS)
-        paddle = pygame.Rect(500 - LINETHICKNESS, game.state[4] * 500 - LINETHICKNESS, LINETHICKNESS,
-                             game.paddle.height * 500)
-        wall = pygame.Rect(0, 0, LINETHICKNESS, WINDOWHEIGHT)
+    ball = pygame.Rect(game.state[0] * 600 - LINETHICKNESS / 2, game.state[1] * 600 - LINETHICKNESS / 2, LINETHICKNESS,
+                       LINETHICKNESS)
+    paddle = pygame.Rect(500 - LINETHICKNESS, game.state[4] * 500 - LINETHICKNESS, LINETHICKNESS,
+                         game.paddle.height * 500)
+    wall = pygame.Rect(0, 0, LINETHICKNESS, WINDOWHEIGHT)
 
-        # draw game
+    # draw game
+    DISPLAYSURF.fill(WHITE)
+    drawBall(ball, game)
+    drawPaddle(paddle, game)
+    drawWall(wall)
+
+    game.ROUND = 200
+    game.round = 0
+    game.all_finished = False
+    game.x = []
+    game.y = []
+
+    while not game.all_finished:  # main game loop
+        for event in pygame.event.get():
+            # exit game
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+
+        # update game
+        game.update()
         DISPLAYSURF.fill(WHITE)
         drawBall(ball, game)
-        drawPaddle(paddle, game)
         drawWall(wall)
+        drawPaddle(paddle, game)
 
-        game.ROUND = 200
-        game.round = 0
-        game.all_finished = False
-        game.x = []
-        game.y = []
+        # update the screen
+        roundtext = FONT.render("Round {0}".format(game.round), 1, (0, 0, 0))
+        DISPLAYSURF.blit(roundtext, (10, 10))
+        scoretext = FONT.render("Score {0}".format(game.score), 1, (0, 0, 0))
+        DISPLAYSURF.blit(scoretext, (10, 20))
+        pygame.display.update()
+        FPSCLOCK.tick(FPS)
 
-        while not game.all_finished:  # main game loop
-            for event in pygame.event.get():
-                # exit game
-                if event.type == QUIT:
-                    pygame.quit()
-                    sys.exit()
-
-            # update game
-            game.update()
-            DISPLAYSURF.fill(WHITE)
-            drawBall(ball, game)
-            drawWall(wall)
-            drawPaddle(paddle, game)
-
-            # update the screen
-            roundtext = FONT.render("Round {0}".format(game.round), 1, (0, 0, 0))
-            DISPLAYSURF.blit(roundtext, (10, 10))
-            scoretext = FONT.render("Score {0}".format(game.score), 1, (0, 0, 0))
-            DISPLAYSURF.blit(scoretext, (10, 20))
-            pygame.display.update()
-            FPSCLOCK.tick(FPS)
-
-        draw_plot()
+    draw_plot()

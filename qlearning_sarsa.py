@@ -45,9 +45,6 @@ class RL(object):
             else:
                 return self.actions[q.index(maxQ)]
 
-    def choose_action_random(self):
-            return random.choice([-1.0, 0.0, 1.0])
-
     def learn_qlearning(self, state1, action1, reward, state2):
         max_q_new = max([self.get_q(state2, a) for a in self.actions])
         self.learn_q(state1, action1, reward, reward + self.gamma * max_q_new)
