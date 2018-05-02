@@ -176,7 +176,7 @@ if __name__ == '__main__':
     # nn = NN(model_dir='./data and plots')
 
     nn = NN(n_layer=4, n_units=256, learn_rate=0.1)
-    nn.train(epoch=10, init_weight=0.025)
+    nn.train(epoch=500, init_weight=0.025)
 
     Y = nn.train_data[:, -1]
     prediction = nn.test(nn.train_data[:, :-1])
