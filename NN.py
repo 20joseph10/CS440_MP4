@@ -6,6 +6,7 @@ import seaborn as sn
 import pandas as pd
 import matplotlib.pyplot as plt
 import glob
+import os
 
 
 class NN(object):
@@ -40,12 +41,13 @@ class NN(object):
 
         else:
             load_data = [None] * 2
-            file = glob.glob('sample_mean.npy')
+            file = glob.glob(model_dir + '/sample_mean.npy')
             self.sample_mean = np.load(file[0])
-            file = glob.glob('sample_std.npy')
+            file = glob.glob(model_dir + '/sample_std.npy')
             self.sample_std = np.load(file[0])
-            for file in glob.glob("*.npy"):
-                load_data[:] = file.strip().split(sep='.')[0].split(sep='_')
+            for file in glob.glob(model_dir + '/*.npy'):
+                load_data[:] = file.strip().split(sep='.')[1].split(sep='_')
+                load_data[0] = load_data[0].split(sep='\\')[1]
                 if load_data[0] == 'W':
                     ws.append(np.load(model_dir + '/W_' + load_data[1] + '.npy'))
                 if load_data[0] == 'B':
@@ -60,9 +62,10 @@ class NN(object):
             self.weights[i] *= init_weight
         loss_curve, acc_curve = self.mini_batch_GD(epoch)
 
-        np.save('sample_mean.npy', self.sample_mean)
-        np.save('sample_std.npy', self.sample_std)
-        file_prefix = ['W_', 'B_']
+        os.makedirs(os.path.dirname('./data and plots/'), exist_ok=True)
+        np.save('./data and plots/sample_mean.npy', self.sample_mean)
+        np.save('./data and plots/sample_std.npy', self.sample_std)
+        file_prefix = ['./data and plots/W_', './data and plots/B_']
         for i in range(len(self.weights)):
             save_file_name = file_prefix[0] + str(i)
             np.save(save_file_name, self.weights[i])
@@ -85,8 +88,7 @@ class NN(object):
                      'learning rate=' + str(self.learn_rate) +
                      ', initial weight scale=' + str(init_weight),
                      fontsize=20)
-        plt.subplots_adjust(top=15)
-        fig.savefig('train_curve.png')
+        plt.savefig('./data and plots/train_curve.png')
 
     def test(self, X):
         return self.layer_network(X)
@@ -171,10 +173,10 @@ class NN(object):
 if __name__ == '__main__':
 
     # if we want to read model, uncomment next line, comment all following lines
-    # nn = NN(model_dir='.')
+    # nn = NN(model_dir='./data and plots')
 
     nn = NN(n_layer=4, n_units=256, learn_rate=0.1)
-    nn.train(epoch=500, init_weight=0.025)
+    nn.train(epoch=10, init_weight=0.025)
 
     Y = nn.train_data[:, -1]
     prediction = nn.test(nn.train_data[:, :-1])
@@ -184,4 +186,4 @@ if __name__ == '__main__':
     plt.figure(figsize=(10, 8))
     sn.heatmap(df_cm, annot=True, fmt='d')
     plt.title('Confusion Matrix')
-    plt.savefig('conf_mat.png')
+    plt.savefig('./data and plots/conf_mat.png')

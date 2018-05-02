@@ -25,7 +25,7 @@ class Pong(object):
         if agent == 'S':
             self.rl = RL()
         elif agent == 'NN':
-            self.nn = NN(model_dir='.')
+            self.nn = NN(model_dir='./data and plots')
             self.all_finished = True
         self.success = 0
         self.score = 0

@@ -127,3 +127,5 @@ if __name__ == '__main__':
         FPSCLOCK.tick(FPS)
 
     draw_plot()
+    pygame.quit()
+    sys.exit(0)
