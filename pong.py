@@ -4,13 +4,13 @@ from paddle import *
 from qlearning_sarsa import *
 from NN import *
 
-ROUND = 50000
 LIMIT = True
 LARGER_THAN_NINE = False
 
 
 class Pong(object):
     def __init__(self, agent):
+        self.ROUND = 50000
         self.ball = Ball()
         self.paddle = Paddle(agent)
         self.agent = agent
@@ -58,7 +58,7 @@ class Pong(object):
             self.y.append(total)
 
         if LIMIT:
-            if self.round == ROUND:
+            if self.round == self.ROUND:
                 self.all_finished = True
 
         if LARGER_THAN_NINE:
@@ -98,11 +98,14 @@ class Pong(object):
     def update(self):
         self.check()
         if self.agent == 'NN':
-            action = self.nn.test(np.array([self.ball.x,
-                                            self.ball.y,
-                                            self.ball.velocity_x,
-                                            self.ball.velocity_y,
-                                            self.paddle.y]))
+            curr_state = np.array([self.ball.x,
+                                   self.ball.y,
+                                   self.ball.velocity_x,
+                                   self.ball.velocity_y,
+                                   self.paddle.y])
+            curr_state -= self.nn.sample_mean
+            curr_state /= self.nn.sample_std
+            action = self.nn.test(curr_state)
             self.paddle.update(action)
             self.ball.update()
 

@@ -23,6 +23,8 @@ class NN(object):
             self.train_data = np.array(train_set).astype('float')
             feature_dim = self.train_data[:, :-1].shape[1]
             self.n_samples = self.train_data.shape[0]
+            self.sample_mean = np.mean(self.train_data[:, :-1], axis=0)
+            self.sample_std = np.std(self.train_data[:, :-1], axis=0)
             self.train_data[:, :-1] = (self.train_data[:, :-1] - np.mean(self.train_data[:, :-1], axis=0)[None, :]) \
                                       / np.std(self.train_data[:, :-1], axis=0)[None, :]
             self.units = n_units
@@ -38,6 +40,10 @@ class NN(object):
 
         else:
             load_data = [None] * 2
+            file = glob.glob('sample_mean.npy')
+            self.sample_mean = np.load(file[0])
+            file = glob.glob('sample_std.npy')
+            self.sample_std = np.load(file[0])
             for file in glob.glob("*.npy"):
                 load_data[:] = file.strip().split(sep='.')[0].split(sep='_')
                 if load_data[0] == 'W':
@@ -54,6 +60,8 @@ class NN(object):
             self.weights[i] *= init_weight
         loss_curve, acc_curve = self.mini_batch_GD(epoch)
 
+        np.save('sample_mean.npy', self.sample_mean)
+        np.save('sample_std.npy', self.sample_std)
         file_prefix = ['W_', 'B_']
         for i in range(len(self.weights)):
             save_file_name = file_prefix[0] + str(i)
@@ -78,7 +86,7 @@ class NN(object):
                      ', initial weight scale=' + str(init_weight),
                      fontsize=20)
         plt.subplots_adjust(top=15)
-        fig.show()
+        fig.savefig('train_curve.png')
 
     def test(self, X):
         return self.layer_network(X)
@@ -176,4 +184,4 @@ if __name__ == '__main__':
     plt.figure(figsize=(10, 8))
     sn.heatmap(df_cm, annot=True, fmt='d')
     plt.title('Confusion Matrix')
-    plt.show()
+    plt.savefig('conf_mat.png')

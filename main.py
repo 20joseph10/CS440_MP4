@@ -18,7 +18,7 @@ def sigint_handler(signum, frame):
 signal.signal(signal.SIGINT, sigint_handler)
 
 # number of frames per second
-FPS = 20
+FPS = 300
 
 # window size
 WINDOWWIDTH = 500
@@ -58,10 +58,10 @@ def draw_plot():
     ax.plot(line_x, line_y, 'r', label='9')
     plt.ylabel('average rebounce')
     plt.xlabel('num of games')
-    plt.title(
-        'Alpha = ' + str(C) + '/(' + str(C) + '+N(s,a)), Gamma = ' + str(GAMMA) + ', Epsilon = ' + str(EPSILON))
+    # plt.title(
+    #     'Alpha = ' + str(C) + '/(' + str(C) + '+N(s,a)), Gamma = ' + str(GAMMA) + ', Epsilon = ' + str(EPSILON))
     plt.legend(loc='lower right')
-    plt.ylim(0, 14)
+    # plt.ylim(0, 14)
     plt.grid(True)
     plt.show()
 
@@ -97,6 +97,7 @@ if __name__ == '__main__':
 
     game.ROUND = 200
     game.round = 0
+    game.scores = []
     game.all_finished = False
     game.x = []
     game.y = []
@@ -115,7 +116,7 @@ if __name__ == '__main__':
         drawBall(ball, game)
         drawWall(wall)
         drawPaddle(paddle, game)
-       
+
 
         # update the screen
         roundtext = FONT.render("Round {0}".format(game.round), 1, (0, 0, 0))
