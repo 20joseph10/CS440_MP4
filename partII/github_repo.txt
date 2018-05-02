@@ -1,7 +1,0 @@
-https://medium.com/deep-math-machine-learning-ai/chapter-7-1-neural-network-from-scratch-in-python-b880b0ff5f7b
-
-https://github.com/manish-mr/Deep-neural-networks-from-scratch
-
-(ipython) https://www.kaggle.com/ancientaxe/simple-neural-network-from-scratch-in-python
-
-https://www.python-course.eu/neural_networks.php
