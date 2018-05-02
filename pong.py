@@ -17,7 +17,7 @@ class Pong(object):
         self.round_finished = False
         self.all_finished = False
         self.lose_times = 0
-        self.test_round = 1000
+        self.test_mode = False
 
         self.state = (self.ball.x, self.ball.y, self.ball.velocity_x, self.ball.velocity_y, self.paddle.y)
         self.x = [0.0]
@@ -46,9 +46,13 @@ class Pong(object):
         self.round += 1
         total = 0
 
-
-        if self.round % self.test_round == 0:
-            total = float(sum(self.scores)) / self.test_round
+        if self.test_mode:
+            total = float(sum(self.scores)) / self.round
+            print(self.round, total)
+            self.x.append(self.round)
+            self.y.append(total)
+        elif self.round % 1000 == 0:
+            total = float(sum(self.scores)) / 1000
             print(self.round, total)
             self.x.append(self.round)
             self.y.append(total)
